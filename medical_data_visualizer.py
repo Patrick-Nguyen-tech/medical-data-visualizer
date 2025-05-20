@@ -4,56 +4,72 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # 1
-df = None
+df = pd.read_csv("medical_examination.csv")
 
-# 2
-df['overweight'] = None
+# 2 BMI = weight / height^2 (m)
+df['overweight'] = (df['weight'] / ((df['height'] / 100) ** 2) > 25).astype(int)
 
-# 3
+# 3 change 1 -> 0 (good), >1 -> 1 (bad)
+df['cholesterol'] = (df['cholesterol'] > 1).astype(int)
+df['gluc'] = (df['gluc'] > 1).astype(int)
 
-
-# 4
+# 4 draw plot
 def draw_cat_plot():
-    # 5
-    df_cat = None
+    # 5 convert data to long type
+    df_cat = pd.melt(
+        df,
+        id_vars=['cardio'],
+        value_vars=['cholesterol','gluc','smoke','alco','active','overweight'] 
+    )
 
-
-    # 6
-    df_cat = None
+    # 6 count number by group
+    df_cat = df_cat.groupby(['cardio','variable','value']).size().reset_index(name='total')
     
 
-    # 7
+    # 7 
+
+    # 8  
+    fig = sns.catplot(
+        data=df_cat,
+        kind='bar',
+        x='variable',
+        y='total',
+        hue='value',
+        col='cardio'
+    ).fig
 
 
-
-    # 8
-    fig = None
-
-
-    # 9
+    # 9 return figure
     fig.savefig('catplot.png')
     return fig
 
 
 # 10
 def draw_heat_map():
-    # 11
-    df_heat = None
+    # 11 clean invalid data
+    df_heat = df[
+        (df['ap_lo'] <= df['ap_hi']) &
+        (df['height'] >= df['height'].quantile(0.025)) &
+        (df['height'] <= df['height'].quantile(0.975)) &
+        (df['weight'] >= df['weight'].quantile(0.025)) &
+        (df['weight'] <= df['weight'].quantile(0.975))
+    ]
 
-    # 12
-    corr = None
+    # 12 matrix correlation
+    corr = df_heat.corr()
 
-    # 13
-    mask = None
+    # 13 create mask for triangle
+    mask = np.triu(np.ones_like(corr,dtype=bool))
 
+    # 14 create drawing frame
+    fig, ax = plt.subplots(figsize=(12,10))
 
-
-    # 14
-    fig, ax = None
-
-    # 15
-
-
+    # 15 drawing heatmap
+    sns.heatmap(
+        corr,mask=mask, annot=True,fmt='.1f',
+        center=0,vmax=0.3,vmin=-0.1,square=True,
+        linewidths=0.5,cbar={"shrink":0.5}
+    )
 
     # 16
     fig.savefig('heatmap.png')
